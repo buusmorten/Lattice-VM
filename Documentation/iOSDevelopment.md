@@ -1,0 +1,115 @@
+# iOS Development
+
+This document describes how to build and debug Lattice VM on iOS and simulator
+devices. Internal schemes and source types retain their UTM names for
+compatibility.
+
+## Getting the Source
+
+Make sure you perform a recursive clone to get all the submodules:
+```
+git clone --recursive https://github.com/buusmorten/Lattice-VM.git
+```
+
+Alternatively, run `git submodule update --init --recursive` after cloning if you did not do a recursive clone.
+
+## Dependencies
+
+The easy way is to get the prebuilt dependences from [GitHub Actions][1]. Pick the latest release and download the `Sysroot-*` artifact for the targets you wish to develop on. You need to be logged in to GitHub to download artifacts.
+
+|                       | Intel                      | Apple Silicon                  |
+|-----------------------|----------------------------|--------------------------------|
+| iOS                   | N/A                        | `ios-arm64`                    |
+| iOS SE                | N/A                        | `ios-tci-arm64`                |
+| iOS Simulator         | `ios_simulator-x86_64`     | `ios_simulator-arm64`          |
+| iOS Simulator SE      | `ios_simulator-tci-x86_64` | `ios_simulator-tci-arm64`      |
+| visionOS              | N/A                        | `visionos-arm64`               |
+| visionOS SE           | N/A                        | `visionos-tci-arm64`           |
+| visionOS Simulator    | N/A                        | `visionos_simulator-arm64`     |
+| visionOS Simulator SE | N/A                        | `visionos_simulator-tci-arm64` |
+
+After downloading the prebuilt artifacts of your choice, extract them to the root directory where you cloned the repository.
+
+Use the latest supported stable Xcode release.
+
+### Building Dependencies (Advanced)
+
+If you want to build the dependencies yourself, it is highly recommended that you start with a fresh macOS VM. This is because some of the dependencies attempt to use `/usr/local/lib` even though the architecture does not match. Certain installed packages like `libusb`, `gawk`, and `cmake` will break the build.
+
+1. Install Xcode command line and [Homebrew][1]
+2. Install the following build prerequisites
+    `brew install bison pkg-config gettext glib libgpg-error nasm meson`
+    `pip3 install six pyparsing`
+   Make sure to add `bison` to your `$PATH` environment variable!
+    `export PATH=/usr/local/opt/bison/bin:/opt/homebrew/opt/bison/bin:$PATH`
+3. Run `./scripts/build_dependencies.sh -p PLATFORM -a ARCHITECTURE` where `ARCHITECTURE` is the last part of the table above (e.g. `x86_64`) and `PLATFORM` is the first part (e.g. `ios_simulator-tci`).
+4. Repeat the above for any other platforms and architectures you wish to target.
+
+## Building Lattice VM
+
+### Command Line
+
+Build the inherited iOS scheme with the script below. Run
+`./scripts/build_utm.sh` for all options.
+
+```
+./scripts/build_utm.sh -k iphoneos -s iOS -a arm64 -o /path/to/output/directory
+```
+
+The built artifact is an unsigned `.xcarchive` which you can use with the package tool (see below). Replace `iOS` with `iOS-SE` to build UTM SE. Replace `iphoneos` with `xros` to build for visionOS.
+
+### Packaging
+
+Artifacts built with `build_utm.sh` (includes GitHub Actions artifacts) must be re-signed before it can be used. For stock iOS devices, you can sign with either a free developer account or a paid developer account. Free accounts have a 7 day expire time and must be re-signed every 7 days. For jailbroken iOS devices, you can generate a DEB which is fake-signed.
+
+#### Stock signed IPA
+
+For a user friendly option, you can use [iOS App Signer][3] to re-sign the `.xcarchive`. Advanced users can use the package.sh script:
+
+```
+./scripts/package.sh signedipa /path/to/UTM.xcarchive /path/to/output TEAM_ID PROFILE_UUID
+```
+
+This builds `UTM.ipa` in `/path/to/output` which can be installed by Xcode, iTunes, or AirDrop. Note that you need a "Development" signing certificate and NOT a "Distribution" certificate. This is because UTM requires a provisioning profile with the `get-task-allow` entitlement which Apple only grants for Development signing.
+
+#### Unsigned IPA
+
+```
+./scripts/package.sh ipa /path/to/UTM.xcarchive /path/to/output
+```
+
+This builds `UTM.ipa` in `/path/to/output` which can be installed by AltStore or a jailbroken device with AppSync Unified installed.
+
+#### DEB Package
+
+```
+./scripts/package.sh deb /path/to/UTM.xcarchive /path/to/output
+```
+
+This builds `UTM.deb` which is a wrapper for an unsigned `UTM.ipa` which can be installed by Cydia or Sileo along with AppSync Unified.
+
+The `UTM.xcarchive`, `UTM.ipa`, and `UTM.deb` filenames above are inherited
+packaging-script interfaces. User-facing app branding is Lattice VM. Renaming
+those artifacts requires corresponding script and signing validation.
+
+### Xcode Development
+
+Copy `CodeSigning.xcconfig.sample` to `CodeSigning.xcconfig` and modify the file replacing `DEVELOPMENT_TEAM` with your Team ID and `PRODUCT_BUNDLE_PREFIX` with a bundle identifier that is registered to you.
+
+If you have a paid Apple Developer account, you can find your Team ID at https://developer.apple.com/account/#/membership
+
+If you have a free Apple Developer account, you need to generate a new signing certificate. To do so, follow the steps in [iOS App Signer][3] to create a new Xcode project and generate a provisioning profile. After saving the project, open `project.pbxproj` inside your newly created `.xcproj` and look for `DEVELOPMENT_TEAM`. Copy this value to `CodeSigning.xcconfig` and your unique identifier to `PRODUCT_BUNDLE_PREFIX`.
+
+Set `DEVELOPER_ACCOUNT_PAID = YES` if you used a paid Apple Developer account in order to automatically request the increased memory limit entitlement from Apple.
+
+### Tethered Launch
+
+JIT availability and launch requirements vary by iOS version and signing
+method. Verify current Apple platform restrictions before distributing a build.
+
+The macOS restore-image picker is macOS-only. iOS, iPadOS, and visionOS builds
+do not use Apple's macOS installation service.
+
+[1]: https://github.com/buusmorten/Lattice-VM/actions?query=workflow%3ABuild
+[2]: https://brew.sh
+[3]: https://dantheman827.github.io/ios-app-signer/

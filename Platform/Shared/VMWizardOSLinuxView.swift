@@ -1,0 +1,216 @@
+//
+// Copyright © 2021 osy. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+import SwiftUI
+
+struct VMWizardOSLinuxView: View {
+    private struct LinuxRelease: Identifiable {
+        let id: String
+        let title: String
+        let architecture: String
+        let downloadURL: URL
+    }
+
+    private enum SelectImage {
+        case kernel
+        case initialRamdisk
+        case rootImage
+        case bootImage
+    }
+    
+    @ObservedObject var wizardState: VMWizardState
+    @State private var isFileImporterPresented: Bool = false
+    @State private var selectImage: SelectImage = .kernel
+    @State private var selectedLinuxRelease = "ubuntu-24"
+
+    private var linuxReleases: [LinuxRelease] {
+        [
+            LinuxRelease(id: "ubuntu-24", title: "Ubuntu 24.04 LTS", architecture: wizardState.systemArchitecture.prettyValue, downloadURL: URL(string: "https://ubuntu.com/download")!),
+            LinuxRelease(id: "ubuntu-22", title: "Ubuntu 22.04 LTS", architecture: wizardState.systemArchitecture.prettyValue, downloadURL: URL(string: "https://releases.ubuntu.com/22.04/")!),
+            LinuxRelease(id: "debian-13", title: "Debian 13", architecture: wizardState.systemArchitecture.prettyValue, downloadURL: URL(string: "https://www.debian.org/distrib/")!),
+            LinuxRelease(id: "debian-12", title: "Debian 12", architecture: wizardState.systemArchitecture.prettyValue, downloadURL: URL(string: "https://www.debian.org/releases/bookworm/debian-installer/")!),
+            LinuxRelease(id: "fedora", title: "Fedora Workstation", architecture: wizardState.systemArchitecture.prettyValue, downloadURL: URL(string: "https://fedoraproject.org/workstation/download")!)
+        ]
+    }
+    
+    private var hasVenturaFeatures: Bool {
+        if #available(macOS 13, *) {
+            return true
+        } else {
+            return false
+        }
+    }
+
+    var body: some View {
+        VMWizardContent("Linux") {
+#if os(macOS)
+            if wizardState.useVirtualization {
+                DetailedSection("Virtualization Engine", description: "Apple Virtualization is experimental and only for advanced use cases. Leave unchecked to use QEMU, which is recommended.") {
+                    Toggle("Use Apple Virtualization", isOn: $wizardState.useAppleVirtualization)
+                }
+            }
+#endif
+
+            Picker("Boot Image Type", selection: $wizardState.bootDevice) {
+                Text("Boot from kernel image").tag(VMBootDevice.kernel)
+                if !wizardState.useAppleVirtualization || hasVenturaFeatures {
+                    Text("Boot from ISO image").tag(VMBootDevice.cd)
+                    Text("Import existing drive").tag(VMBootDevice.drive)
+                }
+            }.pickerStyle(.inline)
+            .onAppear {
+                if ![.kernel, .cd, .drive].contains(wizardState.bootDevice) {
+                    wizardState.bootDevice = .cd
+                }
+            }
+            if wizardState.bootDevice != .kernel {
+                Section {
+                    Picker("Distribution", selection: $selectedLinuxRelease) {
+                        ForEach(linuxReleases) { release in
+                            Text(release.title).tag(release.id)
+                        }
+                    }
+                    if let release = linuxReleases.first(where: { $0.id == selectedLinuxRelease }) {
+                        Link(destination: release.downloadURL) {
+                            Label("Download \(release.title)…", systemImage: "arrow.down.circle")
+                        }
+                        .buttonStyle(.borderless)
+                        Text("Choose an ISO for \(release.architecture), then select it below to continue installation.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                } header: {
+                    Text("Linux Version")
+                }
+                if wizardState.useAppleVirtualization {
+                    Link(destination: URL(string: "https://docs.getutm.app/guides/debian/")!) {
+                        Label("Debian Install Guide", systemImage: "link")
+                    }.buttonStyle(.borderless)
+                } else {
+                    Link(destination: URL(string: "https://docs.getutm.app/guides/ubuntu/")!) {
+                        Label("Ubuntu Install Guide", systemImage: "link")
+                    }.buttonStyle(.borderless)
+                }
+            }
+            
+            #if arch(arm64)
+            if #available(macOS 13, *), wizardState.useAppleVirtualization {
+                Section {
+                    Toggle("Enable Rosetta (x86_64 Emulation)", isOn: $wizardState.linuxHasRosetta)
+                    Link(destination: URL(string: "https://docs.getutm.app/advanced/rosetta/")!) {
+                        Label("Installation Instructions", systemImage: "link")
+                    }.buttonStyle(.borderless)
+                } header: {
+                    Text("Additional Options")
+                }
+            }
+            #endif
+            
+            if wizardState.bootDevice == .kernel {
+
+                Section {
+                    FileBrowseField(url: $wizardState.linuxKernelURL, isFileImporterPresented: $isFileImporterPresented, hasClearButton: false) {
+                        selectImage = .kernel
+                    }
+                } header: {
+                    if wizardState.useAppleVirtualization {
+                        Text("Uncompressed Linux kernel (required)")
+                    } else {
+                        Text("Linux kernel (required)")
+                    }
+                }
+                
+                Section {
+                    FileBrowseField(url: $wizardState.linuxInitialRamdiskURL, isFileImporterPresented: $isFileImporterPresented) {
+                        selectImage = .initialRamdisk
+                    }
+                } header: {
+                    if wizardState.useAppleVirtualization {
+                        Text("Uncompressed Linux initial ramdisk (optional)")
+                    } else {
+                        Text("Linux initial ramdisk (optional)")
+                    }
+                }
+                
+                Section {
+                    FileBrowseField(url: $wizardState.linuxRootImageURL, isFileImporterPresented: $isFileImporterPresented) {
+                        selectImage = .rootImage
+                    }
+                } header: {
+                    Text("Linux Root FS Image (optional)")
+                }
+                
+                Section {
+                    FileBrowseField(url: $wizardState.bootImageURL, isFileImporterPresented: $isFileImporterPresented) {
+                        selectImage = .bootImage
+                    }
+                } header: {
+                    Text("Boot ISO Image (optional)")
+                }
+                
+                Section {
+                    TextField("Boot Arguments", text: $wizardState.linuxBootArguments)
+                } header: {
+                    Text("Boot Arguments")
+                }
+            } else {
+                Section {
+                    FileBrowseField(url: $wizardState.bootImageURL, isFileImporterPresented: $isFileImporterPresented) {
+                        selectImage = .bootImage
+                    }
+                } header: {
+                    if wizardState.bootDevice == .drive {
+                        Text("Import Disk Image")
+                    } else {
+                        Text("Boot ISO Image")
+                    }
+                }
+            }
+            if wizardState.isBusy {
+                Spinner(size: .large)
+            }
+            
+            
+        }
+        .fileImporter(isPresented: $isFileImporterPresented, allowedContentTypes: [.data], onCompletion: processImage)
+    }
+    
+    private func processImage(_ result: Result<URL, Error>) {
+        wizardState.busyWorkAsync {
+            let url = try result.get()
+            await MainActor.run {
+                switch selectImage {
+                case .kernel:
+                    wizardState.linuxKernelURL = url
+                case .initialRamdisk:
+                    wizardState.linuxInitialRamdiskURL = url
+                case .rootImage:
+                    wizardState.linuxRootImageURL = url
+                case .bootImage:
+                    wizardState.bootImageURL = url
+                }
+            }
+        }
+    }
+}
+
+struct VMWizardOSLinuxView_Previews: PreviewProvider {
+    @StateObject static var wizardState = VMWizardState()
+    
+    static var previews: some View {
+        VMWizardOSLinuxView(wizardState: wizardState)
+    }
+}

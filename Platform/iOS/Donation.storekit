@@ -1,0 +1,152 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "A2B91788",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "4FFB8333",
+      "localizations" : [
+        {
+          "description" : "A small one time donation.",
+          "displayName" : "Transistor",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "一次小小的捐赠。",
+          "displayName" : "晶体管",
+          "locale" : "zh_Hans"
+        },
+        {
+          "description" : "一次性的小額度捐贈。",
+          "displayName" : "電晶體",
+          "locale" : "zh_Hant"
+        }
+      ],
+      "productID" : "consumable.small",
+      "referenceName" : "Transistor",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "B6BBB675",
+      "localizations" : [
+        {
+          "description" : "A medium one time donation.",
+          "displayName" : "Chip",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "一次中等的捐赠。",
+          "displayName" : "芯片",
+          "locale" : "zh_Hans"
+        },
+        {
+          "description" : "一次性的中等額度捐贈。",
+          "displayName" : "晶片",
+          "locale" : "zh_Hant"
+        }
+      ],
+      "productID" : "consumable.medium",
+      "referenceName" : "Chip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "FAEB2D3C",
+      "localizations" : [
+        {
+          "description" : "A large one time donation.",
+          "displayName" : "Computer",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "一次大笔的捐赠。",
+          "displayName" : "计算机",
+          "locale" : "zh_Hans"
+        },
+        {
+          "description" : "一次性的大額度捐贈。",
+          "displayName" : "電腦",
+          "locale" : "zh_Hant"
+        }
+      ],
+      "productID" : "consumable.large",
+      "referenceName" : "Computer",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
