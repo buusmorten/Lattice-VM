@@ -40,6 +40,10 @@ Reusable host networks can be created in Lattice VM Settings and selected by
 multiple QEMU VMs. Shared host networks do not provide DHCP; configure guest
 addresses manually.
 
+Shared folders are separate from VM network adapters. SPICE WebDAV uses a
+guest-local endpoint supplied through the SPICE channel; enabling its automatic
+desktop link does not expose the host folder to the LAN.
+
 ## Safety and troubleshooting
 
 Port forwards bind to localhost by default. Binding to all interfaces can

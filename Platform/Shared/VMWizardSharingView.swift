@@ -27,6 +27,13 @@ struct VMWizardSharingView: View {
                 
                 if !wizardState.useAppleVirtualization {
                     Toggle("Share is read only", isOn: $wizardState.sharingReadOnly)
+                    Text("With guest tools installed, Lattice VM automatically adds the share to Windows or Linux desktops.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    Text("Apple Virtualization exposes the folder through VirtioFS. Mounting it inside the guest requires guest operating-system support.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
                 
                 if wizardState.isBusy {

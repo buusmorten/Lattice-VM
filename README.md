@@ -27,6 +27,8 @@ Current version: **Lattice VM 0.1.0 — Developer Preview**, based on UTM
 - Windows and Linux release selectors that open official vendor download pages
   and provide architecture-aware ISO import guidance.
 - SPICE graphics, terminal mode, USB devices, and shared directories.
+- Automatic shared-folder desktop access for supported Windows and Linux QEMU
+  guests when the QEMU/SPICE guest tools are installed.
 - JIT-based QEMU acceleration where the platform permits it.
 - A native SwiftUI interface for Apple platforms.
 
@@ -82,6 +84,18 @@ See [ROADMAP.md](ROADMAP.md) for planned work.
 Lattice VM does not redistribute operating-system images. Catalog availability
 does not guarantee that an older or beta macOS restore image is supported by
 the current host.
+
+### Shared folders
+
+QEMU shared folders are set to appear automatically on supported guest
+desktops. Windows receives a Public Desktop link to the SPICE WebDAV share;
+Linux VirtFS guests receive a `/mnt/LatticeVM` mount and desktop links. The
+QEMU guest agent and the appropriate SPICE WebDAV or VirtFS/9p guest driver must
+be installed and running. The setting can be disabled per VM.
+
+Apple Virtualization exposes shared folders with VirtioFS but does not provide
+a guest command channel, so mounting and desktop placement remain controlled by
+the guest operating system.
 
 ## Building
 

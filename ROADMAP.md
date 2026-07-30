@@ -37,6 +37,8 @@ independent UTM fork.
 - Improve first-run guidance and error recovery.
 - Add clearer distinctions between QEMU and Apple Virtualization capabilities.
 - Improve accessibility and localization coverage.
+- Detect missing guest tools and show actionable shared-folder auto-mount
+  status instead of relying only on logs.
 
 This roadmap is directional rather than a release promise. Proposals should be
 discussed in an issue before substantial implementation work begins.

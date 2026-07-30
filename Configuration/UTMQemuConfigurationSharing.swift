@@ -23,6 +23,9 @@ struct UTMQemuConfigurationSharing: Codable {
     
     /// Sharing should be read only
     var isDirectoryShareReadOnly: Bool = false
+
+    /// Attempt to mount the share and add it to the guest desktop.
+    var isDirectoryShareAutoMount: Bool = true
     
     /// The directory to share. Not saved.
     var directoryShareUrl: URL?
@@ -33,6 +36,7 @@ struct UTMQemuConfigurationSharing: Codable {
     enum CodingKeys: String, CodingKey {
         case directoryShareMode = "DirectoryShareMode"
         case isDirectoryShareReadOnly = "DirectoryShareReadOnly"
+        case isDirectoryShareAutoMount = "DirectoryShareAutoMount"
         case hasClipboardSharing = "ClipboardSharing"
     }
     
@@ -43,6 +47,7 @@ struct UTMQemuConfigurationSharing: Codable {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         directoryShareMode = try values.decode(QEMUFileShareMode.self, forKey: .directoryShareMode)
         isDirectoryShareReadOnly = try values.decode(Bool.self, forKey: .isDirectoryShareReadOnly)
+        isDirectoryShareAutoMount = try values.decodeIfPresent(Bool.self, forKey: .isDirectoryShareAutoMount) ?? true
         hasClipboardSharing = try values.decode(Bool.self, forKey: .hasClipboardSharing)
     }
     
@@ -50,6 +55,7 @@ struct UTMQemuConfigurationSharing: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(directoryShareMode, forKey: .directoryShareMode)
         try container.encode(isDirectoryShareReadOnly, forKey: .isDirectoryShareReadOnly)
+        try container.encode(isDirectoryShareAutoMount, forKey: .isDirectoryShareAutoMount)
         try container.encode(hasClipboardSharing, forKey: .hasClipboardSharing)
     }
 }

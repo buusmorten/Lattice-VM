@@ -151,6 +151,8 @@ final class UTMQemuVirtualMachine: UTMSpiceVirtualMachine {
     }
     
     private var startTask: Task<Void, any Error>?
+
+    private var sharedDirectoryAutoMountTask: Task<Void, Never>?
     
     private var swtpm: UTMSWTPM?
     
@@ -482,6 +484,7 @@ extension UTMQemuVirtualMachine {
             }
             try await startTask!.value
             state = .started
+            requestSharedDirectoryAutoMount()
             if screenshotTimer == nil && !options.contains(.remoteSession) {
                 screenshotTimer = startScreenshotTimer()
             }
@@ -492,6 +495,58 @@ extension UTMQemuVirtualMachine {
             state = .stopped
             throw error
         }
+    }
+
+    func requestSharedDirectoryAutoMount() {
+        sharedDirectoryAutoMountTask?.cancel()
+        sharedDirectoryAutoMountTask = Task { [weak self] in
+            guard let self,
+                  await self.config.sharing.isDirectoryShareAutoMount,
+                  await self.config.sharing.directoryShareUrl != nil else {
+                return
+            }
+            let mode = await self.config.sharing.directoryShareMode
+            for _ in 0..<15 {
+                guard !Task.isCancelled else {
+                    return
+                }
+                if let guestAgent = await self.guestAgent {
+                    do {
+                        switch mode {
+                        case .webdav:
+                            try await self.createWindowsSharedFolder(using: guestAgent)
+                        case .virtfs:
+                            try await self.createLinuxSharedFolder(using: guestAgent)
+                        default:
+                            return
+                        }
+                        return
+                    } catch {
+                        logger.debug("Guest shared-folder auto-mount is not ready: \(error.localizedDescription)")
+                    }
+                }
+                try? await Task.sleep(nanoseconds: 2 * NSEC_PER_SEC)
+            }
+            logger.warning("Shared folder is available to the guest, but automatic desktop mounting requires working guest agent and sharing tools.")
+        }
+    }
+
+    private func createWindowsSharedFolder(using guestAgent: QEMUGuestAgent) async throws {
+        let command = #"sc start WebClient >nul 2>&1 & if not exist "C:\Users\Public\Desktop\Lattice VM" mklink /D "C:\Users\Public\Desktop\Lattice VM" "\\localhost@9843\DavWWWRoot""#
+        _ = try await guestAgent.guestExec("C:\\Windows\\System32\\cmd.exe",
+                                           argv: ["/d", "/c", command],
+                                           envp: nil,
+                                           input: nil,
+                                           captureOutput: false)
+    }
+
+    private func createLinuxSharedFolder(using guestAgent: QEMUGuestAgent) async throws {
+        let command = #"mkdir -p /mnt/LatticeVM && (mountpoint -q /mnt/LatticeVM || mount -t 9p -o trans=virtio,version=9p2000.L share /mnt/LatticeVM) && for desktop in /home/*/Desktop; do [ -d "$desktop" ] && ln -sfn /mnt/LatticeVM "$desktop/Lattice VM"; done"#
+        _ = try await guestAgent.guestExec("/bin/sh",
+                                           argv: ["-c", command],
+                                           envp: nil,
+                                           input: nil,
+                                           captureOutput: false)
     }
     
     func stop(usingMethod method: UTMVirtualMachineStopMethod) async throws {

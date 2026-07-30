@@ -55,6 +55,9 @@ protocol UTMSpiceVirtualMachine: UTMVirtualMachine where Configuration == UTMQem
     ///   - bookmark: Bookmark to access
     ///   - isSecurityScoped: Is the bookmark security scoped?
     func changeVirtfsSharedDirectory(with bookmark: Data, isSecurityScoped: Bool) async throws
+
+    /// Ask the guest agent to expose the current share on the guest desktop.
+    func requestSharedDirectoryAutoMount()
 }
 
 // MARK: - USB redirection
@@ -120,6 +123,9 @@ extension UTMSpiceVirtualMachine {
         } else if await config.sharing.directoryShareMode == .virtfs {
             let tempBookmark = try url.bookmarkData()
             try await changeVirtfsSharedDirectory(with: tempBookmark, isSecurityScoped: false)
+        }
+        if await config.sharing.isDirectoryShareAutoMount {
+            requestSharedDirectoryAutoMount()
         }
     }
 

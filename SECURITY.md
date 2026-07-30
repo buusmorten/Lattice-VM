@@ -31,3 +31,8 @@ Do not report a vendor image becoming unavailable as a Lattice VM security
 issue. Do report catalog spoofing, host-validation bypasses, unsafe archive
 handling, sandbox escapes, unintended network exposure, or credential leakage
 through GitHub's private vulnerability channel.
+
+Automatic QEMU shared-folder mounting executes a fixed, non-user-supplied
+command through the QEMU guest agent. It creates only the documented
+`Lattice VM` desktop link and mount point. Folder paths are handled by the
+existing host sharing channel and are not interpolated into guest commands.

@@ -84,6 +84,13 @@ Windows and Linux selectors open official vendor download pages. Those vendors
 may require browser interaction or issue temporary URLs, so the user imports
 the resulting ISO; Lattice VM does not mirror operating-system media.
 
+For QEMU guests, shared-folder auto-mount uses the existing QEMU guest-agent
+channel after the host share is attached. It retries during guest startup,
+creates a Windows Public Desktop link for SPICE WebDAV, or mounts the `share`
+9p tag at `/mnt/LatticeVM` and creates Linux desktop links. Commands are
+idempotent and require guest tools with the necessary filesystem service or
+driver.
+
 ### UTMAppleConfiguration
 
 Apple Virtualization uses the separate `UTMAppleConfiguration` Codable model.

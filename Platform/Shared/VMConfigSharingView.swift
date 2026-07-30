@@ -37,6 +37,12 @@ struct VMConfigSharingView: View {
                         Toggle(isOn: $config.isDirectoryShareReadOnly, label: {
                             Text("Read Only")
                         })
+                        Toggle(isOn: $config.isDirectoryShareAutoMount, label: {
+                            Text("Add to Guest Desktop Automatically")
+                        })
+                        Text("Requires QEMU guest agent tools. Windows uses the SPICE WebDAV share; Linux uses VirtFS.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }.globalFileImporter(isPresented: $isImporterPresented, allowedContentTypes: [.folder]) { result in
                     data.busyWorkAsync {
